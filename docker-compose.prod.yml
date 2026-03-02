@@ -29,6 +29,7 @@ services:
       DATABASE_URL: postgresql://${DB_USER:-teacher}:${DB_PASSWORD}@teachers-db:5432/${DB_NAME:-teachers_assistant}
       NEXTAUTH_URL: https://teach.gavinbytes.tech
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      AUTH_TRUST_HOST: "true"
       BOT_API_KEY: ${BOT_API_KEY}
       BOT_USER_EMAIL: ${BOT_USER_EMAIL}
     networks:
