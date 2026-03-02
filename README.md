@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# teachersHelp
 
-## Getting Started
+A daily command center for teachers to manage classes, schedules, students, grades, lesson plans, task checklists, and unit plans.
 
-First, run the development server:
+**Stack:** Next.js 16 (App Router) | React 19 | Prisma 7 + PostgreSQL | NextAuth 5 (JWT) | TanStack Query | AG Grid | shadcn/ui + Tailwind 4 | Zod | Zustand
+
+---
+
+## Quick Start
+
+See [STARTUP.md](./STARTUP.md) for the full step-by-step guide.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+docker compose up -d        # Start PostgreSQL
+npm install                 # Install dependencies
+npx prisma migrate dev      # Apply schema
+npm run seed                # Load sample data
+npm run dev                 # Start app at http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Default login: `teacher@school.com` / `password123`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Developer Docs
 
-## Learn More
+| File | Contents |
+|------|----------|
+| [STARTUP.md](./STARTUP.md) | Local setup, Docker, env variables, troubleshooting |
+| [docs/DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md) | Architecture overview, project structure, conventions |
+| [docs/frontend.md](./docs/frontend.md) | Component tree, state management, hooks, routing |
+| [docs/backend.md](./docs/backend.md) | API routes, auth flow, middleware |
+| [docs/database.md](./docs/database.md) | Schema, model relationships, Prisma patterns |
+| [docs/request-lifecycle.md](./docs/request-lifecycle.md) | Data flow diagrams |
+| [docs/gotchas.md](./docs/gotchas.md) | Tricky spots, known patterns, refactoring warnings |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Infrastructure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Database:** PostgreSQL 16 running in Docker (`docker-compose.yml`)
+- **ORM:** Prisma 7 with `@prisma/adapter-pg`
+- **Auth:** NextAuth v5 (JWT, Credentials provider, bcryptjs)
+- **Dev server:** Next.js on `localhost:3000`
+- **Package manager:** npm
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run start` | Run production build |
+| `npm run lint` | Run ESLint |
+| `npm run seed` | Seed database with sample data |
+| `npx prisma migrate dev` | Apply schema migrations |
+| `npx prisma studio` | Open Prisma database browser |
+| `docker compose up -d` | Start PostgreSQL container |
+| `docker compose down` | Stop PostgreSQL container |

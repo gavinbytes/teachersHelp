@@ -44,19 +44,26 @@ Browser
 ## Quick Start
 
 ```bash
-# Install
+# Install dependencies
 npm install
 
-# Set up env (DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL)
-cp .env.example .env
+# Create .env in project root with:
+#   DATABASE_URL="postgresql://teacher:teacher_pass@localhost:5432/teachers_assistant"
+#   NEXTAUTH_URL="http://localhost:3000"
+#   NEXTAUTH_SECRET="super-secret-key-change-in-production"
 
-# DB setup
+# Start PostgreSQL via Docker
+docker compose up -d
+
+# Apply schema and seed sample data
 npx prisma migrate dev
-npx prisma db seed
+npm run seed
 
 # Dev server
 npm run dev        # http://localhost:3000
 ```
+
+See [STARTUP.md](../STARTUP.md) for the full guide with troubleshooting.
 
 ---
 
@@ -77,28 +84,26 @@ src/
         unit-plans/        #   Unit plan CRUD + nested units/sub-units
       dashboard/           # Dashboard aggregation endpoint
       register/            # User registration
+      sessions/            # Class session endpoints + session task CRUD
       settings/            # User preferences
-      tasks/               # Task CRUD + generate + reorder
     classes/[id]/          # Class detail, gradebook, students, unit-plans pages
     calendar/              # Calendar page
     login/ + register/     # Auth pages
     settings/              # Settings page
-    tasks/                 # Tasks page
+    tasks/                 # Session-driven task view page
   components/
     calendar/              # CalendarView (monthly/weekly/daily)
     classes/               # ClassForm, ClassCard, ClassListClient, ScheduleBuilder
-    dashboard/             # DashboardClient, StatsBar, ScheduleStrip, TaskFeed
+    dashboard/             # DashboardClient, SessionCard, WeekNavigator
     gradebook/             # GradebookClient, GradeGrid (AG Grid), CategoryWeights, AddAssignmentDialog
     layout/                # AppShell, Sidebar
     providers/             # SessionProvider, QueryProvider
     settings/              # SettingsClient
     students/              # QuickStudentEntry
-    tasks/                 # TaskList, TaskItem, TaskForm
     ui/                    # shadcn/ui primitives (button, card, dialog, etc.)
     unit-plans/            # UnitPlanClient, UnitPlanTable, CreateUnitPlanDialog
   hooks/                   # TanStack Query hooks (one per domain)
-  lib/                     # Auth config, Prisma client, Zod schemas, utilities
-  stores/                  # Zustand stores (taskStore for drag state)
+  lib/                     # Auth config, Prisma client, Zod schemas, utilities, session generation
   types/                   # TypeScript types, NextAuth augmentation
 ```
 
