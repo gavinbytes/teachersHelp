@@ -33,10 +33,10 @@ COPY --from=builder /app/public ./public
 # Copy Prisma schema + migrations (needed at runtime for migrate deploy)
 COPY --from=builder /app/prisma ./prisma
 
-# Copy Prisma packages into standalone's node_modules
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+# Merge full builder node_modules on top of standalone's minimal set.
+# This gives the prisma CLI all its transitive deps (valibot, etc.)
+# without a separate npm install step. Docker COPY merges directories.
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy entrypoint
 COPY entrypoint.sh ./entrypoint.sh
