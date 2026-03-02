@@ -30,8 +30,9 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Copy Prisma schema + migrations (needed at runtime for migrate deploy)
+# Copy Prisma schema, migrations, and root config file
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 # Merge full builder node_modules on top of standalone's minimal set.
 # This gives the prisma CLI all its transitive deps (valibot, etc.)
