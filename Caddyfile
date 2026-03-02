@@ -1,0 +1,3 @@
+teach.gavinbytes.tech {
+	reverse_proxy teachers-help:3000
+}

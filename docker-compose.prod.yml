@@ -1,0 +1,64 @@
+services:
+  teachers-db:
+    image: postgres:16-alpine
+    container_name: teachers_help_db_prod
+    environment:
+      POSTGRES_USER: ${DB_USER:-teacher}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-teachers_assistant}
+    volumes:
+      - teachers_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-teacher} -d ${DB_NAME:-teachers_assistant}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+    restart: unless-stopped
+
+  teachers-help:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: teachers_help_app
+    depends_on:
+      teachers-db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-teacher}:${DB_PASSWORD}@teachers-db:5432/${DB_NAME:-teachers_assistant}
+      NEXTAUTH_URL: https://teach.gavinbytes.tech
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      BOT_API_KEY: ${BOT_API_KEY}
+      BOT_USER_EMAIL: ${BOT_USER_EMAIL}
+    networks:
+      - internal
+      - gavinbytes-net
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: teachers_help_caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - internal
+      - gavinbytes-net
+    restart: unless-stopped
+
+volumes:
+  teachers_pg_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal:
+  gavinbytes-net:
+    external: true
+    name: gavinbytes-net

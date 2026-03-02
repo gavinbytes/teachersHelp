@@ -16,12 +16,25 @@ export function middleware(request: NextRequest) {
     request.cookies.get("authjs.session-token") ||
     request.cookies.get("__Secure-authjs.session-token");
 
-  if (!token) {
-    const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
+  if (token) {
+    return NextResponse.next();
   }
 
-  return NextResponse.next();
+  // Check for bot API key on /api/* routes
+  if (pathname.startsWith("/api/")) {
+    const authHeader = request.headers.get("authorization");
+    const botApiKey = process.env.BOT_API_KEY;
+
+    if (botApiKey && authHeader === `Bearer ${botApiKey}`) {
+      return NextResponse.next();
+    }
+
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Redirect to login for page routes
+  const loginUrl = new URL("/login", request.url);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
