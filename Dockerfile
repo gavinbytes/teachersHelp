@@ -25,17 +25,18 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
 
-# Copy package files
-COPY package.json package-lock.json ./
-
-# Install production dependencies
-RUN npm ci --omit=dev
-
-# Copy built app
+# Copy standalone Next.js output (includes its own minimal node_modules)
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+
+# Copy Prisma schema + migrations (needed at runtime for migrate deploy)
 COPY --from=builder /app/prisma ./prisma
+
+# Copy Prisma packages into standalone's node_modules
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
 # Copy entrypoint
 COPY entrypoint.sh ./entrypoint.sh
