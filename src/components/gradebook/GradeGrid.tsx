@@ -2,10 +2,72 @@
 
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useUpdateGrades } from "@/hooks/useGradebook";
+import { useUpdateStudent } from "@/hooks/useStudents";
 import { getGradeLetter, getGradeBgColor } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import type { GradebookData, GradeUpdate } from "@/types";
+
+function InlineStudentName({
+  student,
+  classId,
+}: {
+  student: { id: string; firstName: string; lastName: string | null };
+  classId: string;
+}) {
+  const displayName = [student.firstName, student.lastName].filter(Boolean).join(" ");
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(displayName);
+  const updateStudent = useUpdateStudent();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setName(displayName);
+  }, [displayName]);
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editing]);
+
+  function save() {
+    const trimmed = name.trim();
+    if (trimmed && trimmed !== displayName) {
+      updateStudent.mutate({ classId, studentId: student.id, student_name: trimmed });
+    } else {
+      setName(displayName);
+    }
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") save();
+          if (e.key === "Escape") { setName(displayName); setEditing(false); }
+        }}
+        className="w-full h-7 px-1 text-sm font-medium border rounded outline-none focus:ring-2 focus:ring-primary/40"
+      />
+    );
+  }
+
+  return (
+    <span
+      className="cursor-pointer hover:underline"
+      onClick={() => setEditing(true)}
+      title="Click to edit name"
+    >
+      {displayName}
+    </span>
+  );
+}
 
 interface GradeGridProps {
   data: GradebookData;
@@ -193,7 +255,7 @@ export function GradeGrid({ data, classId }: GradeGridProps) {
                   className="border-b last:border-b-0 hover:bg-muted/20"
                 >
                   <td className="sticky left-0 z-10 bg-white border-r px-3 py-1 font-medium whitespace-nowrap">
-                    {[student.firstName, student.lastName].filter(Boolean).join(" ")}
+                    <InlineStudentName student={student} classId={classId} />
                   </td>
                   {data.assignments.map((assignment, ai) => {
                     const key = `${student.id}:${assignment.id}`;

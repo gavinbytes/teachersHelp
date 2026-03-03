@@ -9,9 +9,9 @@ import { SessionWeekView } from "./SessionWeekView";
 
 function getCurrentMonday(): string {
   const now = new Date();
-  const day = now.getUTCDay();
-  const monday = new Date(now);
-  monday.setUTCDate(now.getUTCDate() - day + (day === 0 ? -6 : 1));
+  const day = now.getDay(); // local day of week
+  const diff = day === 0 ? -6 : 1 - day;
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
   return format(monday, "yyyy-MM-dd");
 }
 

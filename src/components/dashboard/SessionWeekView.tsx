@@ -26,8 +26,9 @@ export function SessionWeekView({
     const date = addDays(monday, i);
     const dateStr = format(date, "yyyy-MM-dd");
     const daySessions = sessions.filter((s) => {
-      const sessionDate = new Date(s.date);
-      return format(sessionDate, "yyyy-MM-dd") === dateStr;
+      // Extract UTC date portion directly to avoid local timezone shifts
+      const sessionDateStr = new Date(s.date).toISOString().slice(0, 10);
+      return sessionDateStr === dateStr;
     });
     return { date: dateStr, sessions: daySessions };
   });
