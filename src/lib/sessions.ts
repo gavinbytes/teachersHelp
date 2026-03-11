@@ -31,7 +31,9 @@ export async function ensureSessionsForWeek(
   });
 
   // 2. Compute which (scheduleId, date) pairs should exist this week
+  //    Deduplicate by (classId, day, time) to guard against duplicate schedule records
   const sessionsToCreate: { scheduleId: string; classId: string; date: Date }[] = [];
+  const seenSlots = new Set<string>();
 
   for (const cls of classes) {
     for (const schedule of cls.schedules) {
@@ -45,6 +47,11 @@ export async function ensureSessionsForWeek(
       // Respect class startDate/endDate bounds
       if (cls.startDate && sessionDate < new Date(cls.startDate)) continue;
       if (cls.endDate && sessionDate > new Date(cls.endDate)) continue;
+
+      // Skip duplicate schedule slots (same class, day, and time)
+      const slotKey = `${cls.id}-${schedule.dayOfWeek}-${schedule.startTime}-${schedule.endTime}`;
+      if (seenSlots.has(slotKey)) continue;
+      seenSlots.add(slotKey);
 
       sessionsToCreate.push({
         scheduleId: schedule.id,

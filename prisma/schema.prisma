@@ -98,6 +98,7 @@ model ClassSchedule {
   lessons       Lesson[]
   classSessions ClassSession[]
 
+  @@unique([classId, dayOfWeek, startTime, endTime])
   @@index([classId])
 }
 

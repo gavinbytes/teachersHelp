@@ -85,13 +85,16 @@ export function CalendarView() {
     return map;
   }, [assignments]);
 
-  // Map class schedules to days of week
+  // Map class schedules to days of week (deduplicated by class per day)
   const schedulesByDayOfWeek = useMemo(() => {
     if (!classes) return new Map<number, typeof classes>();
 
     const map = new Map<number, typeof classes>();
     classes.forEach((cls) => {
+      const seenDays = new Set<number>();
       cls.schedules.forEach((schedule) => {
+        if (seenDays.has(schedule.dayOfWeek)) return;
+        seenDays.add(schedule.dayOfWeek);
         const existing = map.get(schedule.dayOfWeek) || [];
         map.set(schedule.dayOfWeek, [...existing, cls]);
       });
@@ -99,15 +102,18 @@ export function CalendarView() {
     return map;
   }, [classes]);
 
-  // Get schedule entries with times for a given day of week
+  // Get schedule entries with times for a given day of week (deduplicated)
   const getScheduleEntriesForDay = (dayOfWeek: number) => {
     if (!classes) return [];
+    const seen = new Set<string>();
     const entries: { cls: (typeof classes)[0]; startTime: string; endTime: string }[] = [];
     classes.forEach((cls) => {
       cls.schedules.forEach((schedule) => {
-        if (schedule.dayOfWeek === dayOfWeek) {
-          entries.push({ cls, startTime: schedule.startTime, endTime: schedule.endTime });
-        }
+        if (schedule.dayOfWeek !== dayOfWeek) return;
+        const key = `${cls.id}-${schedule.startTime}-${schedule.endTime}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        entries.push({ cls, startTime: schedule.startTime, endTime: schedule.endTime });
       });
     });
     return entries.sort((a, b) => a.startTime.localeCompare(b.startTime));

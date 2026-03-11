@@ -81,6 +81,20 @@ export async function POST(
       );
     }
 
+    // Check for existing schedule with same day/time to prevent duplicates
+    const existing = await prisma.classSchedule.findFirst({
+      where: {
+        classId: id,
+        dayOfWeek: validation.data.dayOfWeek,
+        startTime: validation.data.startTime,
+        endTime: validation.data.endTime,
+      },
+    });
+
+    if (existing) {
+      return NextResponse.json(existing, { status: 200 });
+    }
+
     const schedule = await prisma.classSchedule.create({
       data: {
         ...validation.data,

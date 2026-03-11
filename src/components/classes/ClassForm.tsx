@@ -72,11 +72,15 @@ export function ClassForm({ open, onOpenChange }: ClassFormProps) {
     );
   }
 
-  // Expand patterns into individual schedule slots
+  // Expand patterns into individual schedule slots, deduplicating overlaps
   function expandPatterns(): { dayOfWeek: number; startTime: string; endTime: string }[] {
+    const seen = new Set<string>();
     const slots: { dayOfWeek: number; startTime: string; endTime: string }[] = [];
     for (const pattern of patterns) {
       for (const day of pattern.days) {
+        const key = `${day}-${pattern.startTime}-${pattern.endTime}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
         slots.push({ dayOfWeek: day, startTime: pattern.startTime, endTime: pattern.endTime });
       }
     }
