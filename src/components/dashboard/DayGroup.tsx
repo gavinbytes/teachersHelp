@@ -27,7 +27,7 @@ export function DayGroup({
   return (
     <div
       className={`rounded-lg border p-3 ${
-        today ? "border-primary bg-primary/5" : ""
+        today ? "border-primary border-2" : ""
       }`}
     >
       <div className="flex items-center justify-between mb-2">
