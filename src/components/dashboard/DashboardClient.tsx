@@ -10,17 +10,16 @@ import { WeekProgressBar } from "./WeekProgressBar";
 import { SessionWeekView } from "./SessionWeekView";
 import { UpcomingDeadlines } from "./UpcomingDeadlines";
 
-function getCurrentMonday(): string {
+function getCurrentSunday(): string {
   const now = new Date();
-  const day = now.getDay(); // local day of week
-  const diff = day === 0 ? -6 : 1 - day;
-  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
-  return format(monday, "yyyy-MM-dd");
+  const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const sunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
+  return format(sunday, "yyyy-MM-dd");
 }
 
 export function DashboardClient() {
-  const currentMonday = getCurrentMonday();
-  const [weekStart, setWeekStart] = useState(currentMonday);
+  const currentSunday = getCurrentSunday();
+  const [weekStart, setWeekStart] = useState(currentSunday);
 
   const [selectedClassId, setSelectedClassId] = useState<string>("all");
 
@@ -31,7 +30,7 @@ export function DashboardClient() {
   const deleteTask = useDeleteSessionTask();
   const updateNotes = useUpdateSessionNotes();
 
-  const isCurrentWeek = weekStart === currentMonday;
+  const isCurrentWeek = weekStart === currentSunday;
 
   const filteredSessions = data
     ? selectedClassId === "all"
@@ -50,8 +49,8 @@ export function DashboardClient() {
   }, [weekStart]);
 
   const handleThisWeek = useCallback(() => {
-    setWeekStart(currentMonday);
-  }, [currentMonday]);
+    setWeekStart(currentSunday);
+  }, [currentSunday]);
 
   const handleToggleTask = useCallback(
     (sessionId: string, taskId: string, completed: boolean) => {
@@ -87,8 +86,8 @@ export function DashboardClient() {
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="h-8 animate-pulse rounded bg-muted" />
         <div className="h-4 w-48 animate-pulse rounded bg-muted" />
-        <div className="grid gap-3 md:grid-cols-5">
-          {[1, 2, 3, 4, 5].map((i) => (
+        <div className="grid gap-3 md:grid-cols-7">
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
             <div key={i} className="h-48 animate-pulse rounded-lg bg-muted" />
           ))}
         </div>

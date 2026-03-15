@@ -3,20 +3,20 @@ import type { ClassSessionWithDetails } from "@/types";
 
 /**
  * Ensure ClassSession records exist for every (schedule, date) pair
- * in the given Mon–Fri week, then return all sessions for the week
+ * in the given Sun–Sat week, then return all sessions for the week
  * with tasks, class, schedule, and lesson included.
  */
 export async function ensureSessionsForWeek(
   userId: string,
   weekStart: Date
 ): Promise<ClassSessionWithDetails[]> {
-  // Normalise weekStart to Monday 00:00:00 UTC
-  const monday = new Date(weekStart);
-  monday.setUTCHours(0, 0, 0, 0);
+  // Normalise weekStart to Sunday 00:00:00 UTC
+  const sunday = new Date(weekStart);
+  sunday.setUTCHours(0, 0, 0, 0);
 
-  const friday = new Date(monday);
-  friday.setUTCDate(monday.getUTCDate() + 4);
-  friday.setUTCHours(23, 59, 59, 999);
+  const saturday = new Date(sunday);
+  saturday.setUTCDate(sunday.getUTCDate() + 6);
+  saturday.setUTCHours(23, 59, 59, 999);
 
   // 1. Load all user classes with schedules + default templates
   const classes = await prisma.class.findMany({
@@ -38,10 +38,8 @@ export async function ensureSessionsForWeek(
   for (const cls of classes) {
     for (const schedule of cls.schedules) {
       // dayOfWeek: 0=Sun, 1=Mon, ..., 6=Sat
-      if (schedule.dayOfWeek < 1 || schedule.dayOfWeek > 5) continue; // skip weekends
-
-      const sessionDate = new Date(monday);
-      sessionDate.setUTCDate(monday.getUTCDate() + (schedule.dayOfWeek - 1)); // Mon=0 offset
+      const sessionDate = new Date(sunday);
+      sessionDate.setUTCDate(sunday.getUTCDate() + schedule.dayOfWeek); // Sun=0 offset
       sessionDate.setUTCHours(0, 0, 0, 0);
 
       // Respect class startDate/endDate bounds
@@ -74,7 +72,7 @@ export async function ensureSessionsForWeek(
   const allSessions = await prisma.classSession.findMany({
     where: {
       class: { userId },
-      date: { gte: monday, lte: friday },
+      date: { gte: sunday, lte: saturday },
     },
     include: { tasks: true },
   });
@@ -119,7 +117,7 @@ export async function ensureSessionsForWeek(
   const sessions = await prisma.classSession.findMany({
     where: {
       class: { userId },
-      date: { gte: monday, lte: friday },
+      date: { gte: sunday, lte: saturday },
     },
     include: {
       class: true,

@@ -17,23 +17,23 @@ export async function GET(req: Request) {
     if (weekStartParam) {
       weekStart = new Date(weekStartParam + "T00:00:00.000Z");
     } else {
-      // Default to current week's Monday
+      // Default to current week's Sunday
       const now = new Date();
-      const day = now.getUTCDay();
+      const day = now.getUTCDay(); // 0=Sun
       weekStart = new Date(now);
-      weekStart.setUTCDate(now.getUTCDate() - day + (day === 0 ? -6 : 1));
+      weekStart.setUTCDate(now.getUTCDate() - day);
       weekStart.setUTCHours(0, 0, 0, 0);
     }
 
     const sessions = await ensureSessionsForWeek(userId, weekStart);
 
-    const friday = new Date(weekStart);
-    friday.setUTCDate(weekStart.getUTCDate() + 4);
+    const saturday = new Date(weekStart);
+    saturday.setUTCDate(weekStart.getUTCDate() + 6);
 
     return NextResponse.json({
       sessions,
       weekStart: weekStart.toISOString().split("T")[0],
-      weekEnd: friday.toISOString().split("T")[0],
+      weekEnd: saturday.toISOString().split("T")[0],
     });
   } catch (error) {
     console.error("Error fetching sessions:", error);

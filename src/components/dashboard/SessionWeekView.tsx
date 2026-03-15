@@ -21,11 +21,11 @@ export function SessionWeekView({
   onDeleteTask,
   onUpdateNotes,
 }: SessionWeekViewProps) {
-  const monday = parseISO(weekStart);
+  const sunday = parseISO(weekStart);
 
-  // Build 5 day slots (Mon-Fri)
-  const days = Array.from({ length: 5 }, (_, i) => {
-    const date = addDays(monday, i);
+  // Build 7 day slots (Sun-Sat)
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(sunday, i);
     const dateStr = format(date, "yyyy-MM-dd");
     const daySessions = sessions.filter((s) => {
       // Extract UTC date portion directly to avoid local timezone shifts
@@ -36,7 +36,7 @@ export function SessionWeekView({
   });
 
   return (
-    <div className="grid gap-3 md:grid-cols-5">
+    <div className="grid gap-3 md:grid-cols-7">
       {days.map(({ date, sessions: daySessions }) => (
         <DayGroup
           key={date}
