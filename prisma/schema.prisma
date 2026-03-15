@@ -266,11 +266,12 @@ enum SubUnitStatus {
 }
 
 model UnitPlan {
-  id        String   @id @default(cuid())
-  classId   String
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  classId    String
+  name       String
+  totalWeeks Int      @default(18)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   class Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
   units Unit[]
@@ -282,7 +283,8 @@ model Unit {
   id         String   @id @default(cuid())
   unitPlanId String
   name       String
-  weekNumber Int
+  startWeek  Int
+  endWeek    Int
   sortOrder  Int
   createdAt  DateTime @default(now())
 

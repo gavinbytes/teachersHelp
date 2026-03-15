@@ -18,7 +18,7 @@ export async function GET(
     const units = await prisma.unit.findMany({
       where: { unitPlanId: planId },
       include: { subUnits: { orderBy: { sortOrder: "asc" } } },
-      orderBy: [{ weekNumber: "asc" }, { sortOrder: "asc" }],
+      orderBy: [{ startWeek: "asc" }, { sortOrder: "asc" }],
     });
 
     return NextResponse.json(units);

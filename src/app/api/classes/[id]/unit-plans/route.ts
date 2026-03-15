@@ -28,7 +28,7 @@ export async function GET(
       where: { classId: id },
       include: {
         units: {
-          orderBy: [{ weekNumber: "asc" }, { sortOrder: "asc" }],
+          orderBy: [{ startWeek: "asc" }, { sortOrder: "asc" }],
           include: {
             subUnits: { orderBy: { sortOrder: "asc" } },
           },
@@ -78,6 +78,7 @@ export async function POST(
     const plan = await prisma.unitPlan.create({
       data: {
         name: validation.data.name,
+        totalWeeks: validation.data.weeks ?? 18,
         classId: id,
       },
       include: {

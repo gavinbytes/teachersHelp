@@ -45,6 +45,7 @@ export type GradeUpdate = {
 };
 
 export type UnitPlanWithUnits = UnitPlan & {
+  totalWeeks: number;
   units: (Unit & {
     subUnits: SubUnit[];
   })[];

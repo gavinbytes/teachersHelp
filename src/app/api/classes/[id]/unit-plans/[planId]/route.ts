@@ -33,7 +33,7 @@ export async function GET(
       where: { id: planId },
       include: {
         units: {
-          orderBy: [{ weekNumber: "asc" }, { sortOrder: "asc" }],
+          orderBy: [{ startWeek: "asc" }, { sortOrder: "asc" }],
           include: {
             subUnits: { orderBy: { sortOrder: "asc" } },
           },
@@ -80,7 +80,7 @@ export async function PATCH(
       data: { name: validation.data.name },
       include: {
         units: {
-          orderBy: [{ weekNumber: "asc" }, { sortOrder: "asc" }],
+          orderBy: [{ startWeek: "asc" }, { sortOrder: "asc" }],
           include: { subUnits: { orderBy: { sortOrder: "asc" } } },
         },
       },

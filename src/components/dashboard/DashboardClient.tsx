@@ -2,10 +2,13 @@
 
 import { useState, useCallback } from "react";
 import { format, addDays } from "date-fns";
-import { useWeekSessions, useToggleSessionTask, useAddSessionTask, useDeleteSessionTask } from "@/hooks/useSessions";
+import { useWeekSessions, useToggleSessionTask, useAddSessionTask, useDeleteSessionTask, useUpdateSessionNotes } from "@/hooks/useSessions";
+import { useClasses } from "@/hooks/useClasses";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WeekNavigator } from "./WeekNavigator";
 import { WeekProgressBar } from "./WeekProgressBar";
 import { SessionWeekView } from "./SessionWeekView";
+import { UpcomingDeadlines } from "./UpcomingDeadlines";
 
 function getCurrentMonday(): string {
   const now = new Date();
@@ -19,12 +22,22 @@ export function DashboardClient() {
   const currentMonday = getCurrentMonday();
   const [weekStart, setWeekStart] = useState(currentMonday);
 
+  const [selectedClassId, setSelectedClassId] = useState<string>("all");
+
   const { data, isLoading } = useWeekSessions(weekStart);
+  const { data: classes } = useClasses();
   const toggleTask = useToggleSessionTask();
   const addTask = useAddSessionTask();
   const deleteTask = useDeleteSessionTask();
+  const updateNotes = useUpdateSessionNotes();
 
   const isCurrentWeek = weekStart === currentMonday;
+
+  const filteredSessions = data
+    ? selectedClassId === "all"
+      ? data.sessions
+      : data.sessions.filter((s) => s.class.id === selectedClassId)
+    : [];
 
   const handlePrevWeek = useCallback(() => {
     const prev = addDays(new Date(weekStart + "T00:00:00"), -7);
@@ -61,6 +74,13 @@ export function DashboardClient() {
     [deleteTask]
   );
 
+  const handleUpdateNotes = useCallback(
+    (sessionId: string, notes: string) => {
+      updateNotes.mutate({ sessionId, notes });
+    },
+    [updateNotes]
+  );
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -80,27 +100,53 @@ export function DashboardClient() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        {data && (
-          <WeekNavigator
-            weekStart={data.weekStart}
-            weekEnd={data.weekEnd}
-            onPrevWeek={handlePrevWeek}
-            onNextWeek={handleNextWeek}
-            onThisWeek={handleThisWeek}
-            isCurrentWeek={isCurrentWeek}
-          />
-        )}
+        <div className="flex items-center gap-3 flex-wrap">
+          {classes && classes.length > 0 && (
+            <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="All Classes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Classes</SelectItem>
+                {classes.map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id}>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: cls.color ?? "#6b7280" }}
+                      />
+                      {cls.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {data && (
+            <WeekNavigator
+              weekStart={data.weekStart}
+              weekEnd={data.weekEnd}
+              onPrevWeek={handlePrevWeek}
+              onNextWeek={handleNextWeek}
+              onThisWeek={handleThisWeek}
+              isCurrentWeek={isCurrentWeek}
+            />
+          )}
+        </div>
       </div>
+
+      <UpcomingDeadlines />
 
       {data && (
         <>
-          <WeekProgressBar sessions={data.sessions} />
+          <WeekProgressBar sessions={filteredSessions} />
           <SessionWeekView
-            sessions={data.sessions}
+            sessions={filteredSessions}
             weekStart={data.weekStart}
             onToggleTask={handleToggleTask}
             onAddTask={handleAddTask}
             onDeleteTask={handleDeleteTask}
+            onUpdateNotes={handleUpdateNotes}
           />
         </>
       )}

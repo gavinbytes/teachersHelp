@@ -31,11 +31,11 @@ export function useUnitPlan(classId: string, planId: string) {
 export function useCreateUnitPlan() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ classId, name }: { classId: string; name: string }) => {
+    mutationFn: async ({ classId, name, weeks }: { classId: string; name: string; weeks?: number }) => {
       const res = await fetch(`/api/classes/${classId}/unit-plans`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, weeks }),
       });
       if (!res.ok) throw new Error("Failed to create unit plan");
       return res.json();
@@ -72,19 +72,21 @@ export function useCreateUnit() {
       classId,
       planId,
       name,
-      weekNumber,
+      startWeek,
+      endWeek,
       sortOrder,
     }: {
       classId: string;
       planId: string;
       name: string;
-      weekNumber: number;
+      startWeek: number;
+      endWeek: number;
       sortOrder: number;
     }) => {
       const res = await fetch(`/api/classes/${classId}/unit-plans/${planId}/units`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, weekNumber, sortOrder }),
+        body: JSON.stringify({ name, startWeek, endWeek, sortOrder }),
       });
       if (!res.ok) throw new Error("Failed to create unit");
       return res.json();
@@ -110,7 +112,8 @@ export function useUpdateUnit() {
       planId: string;
       unitId: string;
       name?: string;
-      weekNumber?: number;
+      startWeek?: number;
+      endWeek?: number;
       sortOrder?: number;
     }) => {
       const res = await fetch(`/api/classes/${classId}/unit-plans/${planId}/units/${unitId}`, {

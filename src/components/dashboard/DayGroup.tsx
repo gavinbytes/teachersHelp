@@ -10,6 +10,7 @@ interface DayGroupProps {
   onToggleTask: (sessionId: string, taskId: string, completed: boolean) => void;
   onAddTask: (sessionId: string, title: string) => void;
   onDeleteTask: (sessionId: string, taskId: string) => void;
+  onUpdateNotes?: (sessionId: string, notes: string) => void;
 }
 
 export function DayGroup({
@@ -18,6 +19,7 @@ export function DayGroup({
   onToggleTask,
   onAddTask,
   onDeleteTask,
+  onUpdateNotes,
 }: DayGroupProps) {
   const dateObj = parseISO(date);
   const today = isToday(dateObj);
@@ -61,6 +63,7 @@ export function DayGroup({
               onToggleTask={onToggleTask}
               onAddTask={onAddTask}
               onDeleteTask={onDeleteTask}
+              onUpdateNotes={onUpdateNotes}
             />
           ))}
         </div>

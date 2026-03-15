@@ -25,13 +25,15 @@ export function CreateUnitPlanDialog({
 }: CreateUnitPlanDialogProps) {
   const createPlan = useCreateUnitPlan();
   const [name, setName] = useState("");
+  const [weeks, setWeeks] = useState(18);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
 
-    await createPlan.mutateAsync({ classId, name: name.trim() });
+    await createPlan.mutateAsync({ classId, name: name.trim(), weeks });
     setName("");
+    setWeeks(18);
     onOpenChange(false);
   }
 
@@ -51,6 +53,20 @@ export function CreateUnitPlanDialog({
               placeholder="e.g. Fall 2026 Curriculum"
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="planWeeks">Weeks in Term</Label>
+            <Input
+              id="planWeeks"
+              type="number"
+              value={weeks}
+              min={1}
+              max={52}
+              onChange={(e) => setWeeks(Number(e.target.value))}
+            />
+            <p className="text-xs text-muted-foreground">
+              How many weeks is this term/semester? You can adjust later.
+            </p>
           </div>
           <Button type="submit" className="w-full" disabled={createPlan.isPending}>
             {createPlan.isPending ? "Creating..." : "Create Plan"}

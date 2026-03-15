@@ -96,6 +96,53 @@ export function useAddSessionTask() {
   });
 }
 
+export function useUpdateSessionNotes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      sessionId,
+      notes,
+    }: {
+      sessionId: string;
+      notes: string;
+    }) => {
+      const res = await fetch(`/api/sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: notes || undefined }),
+      });
+      if (!res.ok) throw new Error("Failed to update notes");
+      return res.json();
+    },
+    onMutate: async ({ sessionId, notes }) => {
+      await queryClient.cancelQueries({ queryKey: ["sessions"] });
+      const queries = queryClient.getQueriesData<WeekSessionsData>({
+        queryKey: ["sessions"],
+      });
+      queries.forEach(([key, data]) => {
+        if (data?.sessions) {
+          queryClient.setQueryData(key, {
+            ...data,
+            sessions: data.sessions.map((s: ClassSessionWithDetails) =>
+              s.id === sessionId ? { ...s, notes } : s
+            ),
+          });
+        }
+      });
+      return { queries };
+    },
+    onError: (_, __, context) => {
+      context?.queries.forEach(([key, data]) => {
+        if (data) queryClient.setQueryData(key, data);
+      });
+      toast.error("Failed to save notes");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+    },
+  });
+}
+
 export function useDeleteSessionTask() {
   const queryClient = useQueryClient();
   return useMutation({

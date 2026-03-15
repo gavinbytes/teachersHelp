@@ -86,7 +86,8 @@ export const unitPlanSchema = z.object({
 
 export const unitSchema = z.object({
   name: z.string().min(1, "Unit name is required"),
-  weekNumber: z.number().min(1),
+  startWeek: z.number().min(1),
+  endWeek: z.number().min(1),
   sortOrder: z.number().min(0),
 });
 

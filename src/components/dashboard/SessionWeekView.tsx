@@ -10,6 +10,7 @@ interface SessionWeekViewProps {
   onToggleTask: (sessionId: string, taskId: string, completed: boolean) => void;
   onAddTask: (sessionId: string, title: string) => void;
   onDeleteTask: (sessionId: string, taskId: string) => void;
+  onUpdateNotes?: (sessionId: string, notes: string) => void;
 }
 
 export function SessionWeekView({
@@ -18,6 +19,7 @@ export function SessionWeekView({
   onToggleTask,
   onAddTask,
   onDeleteTask,
+  onUpdateNotes,
 }: SessionWeekViewProps) {
   const monday = parseISO(weekStart);
 
@@ -43,6 +45,7 @@ export function SessionWeekView({
           onToggleTask={onToggleTask}
           onAddTask={onAddTask}
           onDeleteTask={onDeleteTask}
+          onUpdateNotes={onUpdateNotes}
         />
       ))}
     </div>
