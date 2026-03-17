@@ -130,5 +130,16 @@ export async function ensureSessionsForWeek(
     orderBy: [{ date: "asc" }, { schedule: { startTime: "asc" } }],
   });
 
-  return sessions as ClassSessionWithDetails[];
+  // 6. Deduplicate: if duplicate schedules caused multiple sessions for the
+  //    same class + date + time slot, keep only the one with the most tasks.
+  const seen = new Map<string, ClassSessionWithDetails>();
+  for (const s of sessions as ClassSessionWithDetails[]) {
+    const key = `${s.classId}-${s.date}-${s.schedule?.startTime}-${s.schedule?.endTime}`;
+    const existing = seen.get(key);
+    if (!existing || s.tasks.length > existing.tasks.length) {
+      seen.set(key, s);
+    }
+  }
+
+  return Array.from(seen.values());
 }
