@@ -19,9 +19,10 @@ model User {
   updatedAt     DateTime  @updatedAt
   preferences   Json      @default("{}")
 
-  accounts Account[]
-  sessions Session[]
-  classes  Class[]
+  accounts        Account[]
+  sessions        Session[]
+  classes         Class[]
+  dashboardEvents DashboardEvent[]
 }
 
 model Account {
@@ -304,4 +305,21 @@ model SubUnit {
   unit Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
 
   @@index([unitId])
+}
+
+// ─── Dashboard Events ───────────────────────────────────────
+
+model DashboardEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  date      DateTime
+  time      String?  // "14:00" format, null = all-day
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
 }

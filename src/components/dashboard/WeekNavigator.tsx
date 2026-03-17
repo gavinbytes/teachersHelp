@@ -11,6 +11,7 @@ interface WeekNavigatorProps {
   onNextWeek: () => void;
   onThisWeek: () => void;
   isCurrentWeek: boolean;
+  label?: string;
 }
 
 export function WeekNavigator({
@@ -20,14 +21,16 @@ export function WeekNavigator({
   onNextWeek,
   onThisWeek,
   isCurrentWeek,
+  label: customLabel,
 }: WeekNavigatorProps) {
-  const start = parseISO(weekStart);
-  const end = parseISO(weekEnd);
-
-  const sameMonth = start.getMonth() === end.getMonth();
-  const label = sameMonth
-    ? `${format(start, "MMMM d")} - ${format(end, "d, yyyy")}`
-    : `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`;
+  const label = customLabel ?? (() => {
+    const start = parseISO(weekStart);
+    const end = parseISO(weekEnd);
+    const sameMonth = start.getMonth() === end.getMonth();
+    return sameMonth
+      ? `${format(start, "MMMM d")} - ${format(end, "d, yyyy")}`
+      : `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`;
+  })();
 
   return (
     <div className="flex items-center gap-2">
@@ -35,14 +38,14 @@ export function WeekNavigator({
         <ChevronLeft className="h-4 w-4" />
       </Button>
       <div className="text-center min-w-[220px]">
-        <p className="text-sm font-semibold">Week of {label}</p>
+        <p className="text-sm font-semibold">{label}</p>
       </div>
       <Button variant="outline" size="icon" onClick={onNextWeek}>
         <ChevronRight className="h-4 w-4" />
       </Button>
       {!isCurrentWeek && (
         <Button variant="ghost" size="sm" onClick={onThisWeek}>
-          This Week
+          Today
         </Button>
       )}
     </div>

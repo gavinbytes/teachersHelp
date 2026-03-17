@@ -1,36 +1,70 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { format, addDays } from "date-fns";
+import { format, addDays, parseISO } from "date-fns";
 import { useWeekSessions, useToggleSessionTask, useAddSessionTask, useDeleteSessionTask, useUpdateSessionNotes } from "@/hooks/useSessions";
 import { useClasses } from "@/hooks/useClasses";
+import { useWeekEvents, useCreateEvent, useToggleEvent, useDeleteEvent } from "@/hooks/useEvents";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { WeekNavigator } from "./WeekNavigator";
 import { WeekProgressBar } from "./WeekProgressBar";
 import { SessionWeekView } from "./SessionWeekView";
 import { UpcomingDeadlines } from "./UpcomingDeadlines";
 
+type ViewMode = "week" | "school" | "3day" | "day";
+
+const VIEW_OPTIONS: { value: ViewMode; label: string }[] = [
+  { value: "week", label: "Week" },
+  { value: "school", label: "5 Day" },
+  { value: "3day", label: "3 Day" },
+  { value: "day", label: "Day" },
+];
+
 function getCurrentSunday(): string {
   const now = new Date();
-  const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const day = now.getDay();
   const sunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
   return format(sunday, "yyyy-MM-dd");
+}
+
+function getTodayDayIndex(): number {
+  return new Date().getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+}
+
+function getViewSlice(viewMode: ViewMode, dayOffset: number): { startIndex: number; dayCount: number } {
+  switch (viewMode) {
+    case "week":
+      return { startIndex: 0, dayCount: 7 };
+    case "school":
+      return { startIndex: 1, dayCount: 5 };
+    case "3day":
+      return { startIndex: Math.min(dayOffset, 4), dayCount: 3 };
+    case "day":
+      return { startIndex: dayOffset, dayCount: 1 };
+  }
 }
 
 export function DashboardClient() {
   const currentSunday = getCurrentSunday();
   const [weekStart, setWeekStart] = useState(currentSunday);
-
+  const [viewMode, setViewMode] = useState<ViewMode>("week");
+  const [dayOffset, setDayOffset] = useState(getTodayDayIndex);
   const [selectedClassId, setSelectedClassId] = useState<string>("all");
 
   const { data, isLoading } = useWeekSessions(weekStart);
   const { data: classes } = useClasses();
+  const { data: events } = useWeekEvents(weekStart);
   const toggleTask = useToggleSessionTask();
   const addTask = useAddSessionTask();
   const deleteTask = useDeleteSessionTask();
   const updateNotes = useUpdateSessionNotes();
+  const createEvent = useCreateEvent();
+  const toggleEvent = useToggleEvent();
+  const deleteEvent = useDeleteEvent();
 
   const isCurrentWeek = weekStart === currentSunday;
+  const { startIndex, dayCount } = getViewSlice(viewMode, dayOffset);
 
   const filteredSessions = data
     ? selectedClassId === "all"
@@ -38,19 +72,84 @@ export function DashboardClient() {
       : data.sessions.filter((s) => s.class.id === selectedClassId)
     : [];
 
-  const handlePrevWeek = useCallback(() => {
-    const prev = addDays(new Date(weekStart + "T00:00:00"), -7);
-    setWeekStart(format(prev, "yyyy-MM-dd"));
+  // Navigation: week/school step by 7 days, 3day/day step within the week then wrap
+  const handlePrev = useCallback(() => {
+    if (viewMode === "week" || viewMode === "school") {
+      setWeekStart((ws) => format(addDays(parseISO(ws), -7), "yyyy-MM-dd"));
+    } else if (viewMode === "3day") {
+      setDayOffset((prev) => {
+        const next = prev - 3;
+        if (next < 0) {
+          setWeekStart((ws) => format(addDays(parseISO(ws), -7), "yyyy-MM-dd"));
+          return Math.max(0, 7 + next);
+        }
+        return next;
+      });
+    } else {
+      setDayOffset((prev) => {
+        if (prev <= 0) {
+          setWeekStart((ws) => format(addDays(parseISO(ws), -7), "yyyy-MM-dd"));
+          return 6;
+        }
+        return prev - 1;
+      });
+    }
+  }, [viewMode]);
+
+  const handleNext = useCallback(() => {
+    if (viewMode === "week" || viewMode === "school") {
+      setWeekStart((ws) => format(addDays(parseISO(ws), 7), "yyyy-MM-dd"));
+    } else if (viewMode === "3day") {
+      setDayOffset((prev) => {
+        const next = prev + 3;
+        if (next > 4) {
+          setWeekStart((ws) => format(addDays(parseISO(ws), 7), "yyyy-MM-dd"));
+          return 0;
+        }
+        return next;
+      });
+    } else {
+      setDayOffset((prev) => {
+        if (prev >= 6) {
+          setWeekStart((ws) => format(addDays(parseISO(ws), 7), "yyyy-MM-dd"));
+          return 0;
+        }
+        return prev + 1;
+      });
+    }
+  }, [viewMode]);
+
+  const handleToday = useCallback(() => {
+    setWeekStart(getCurrentSunday());
+    setDayOffset(getTodayDayIndex());
+  }, []);
+
+  const handleViewChange = useCallback((mode: ViewMode) => {
+    setViewMode(mode);
+    // Reset dayOffset to today when switching to 3day/day modes
+    if (mode === "3day" || mode === "day") {
+      if (weekStart === getCurrentSunday()) {
+        setDayOffset(getTodayDayIndex());
+      } else {
+        setDayOffset(0);
+      }
+    }
   }, [weekStart]);
 
-  const handleNextWeek = useCallback(() => {
-    const next = addDays(new Date(weekStart + "T00:00:00"), 7);
-    setWeekStart(format(next, "yyyy-MM-dd"));
-  }, [weekStart]);
+  // Compute the date range label for the current view
+  const viewLabel = (() => {
+    if (!data) return "";
+    const ws = parseISO(data.weekStart);
+    const firstDay = addDays(ws, startIndex);
+    const lastDay = addDays(ws, startIndex + dayCount - 1);
+    if (dayCount === 1) return format(firstDay, "EEEE, MMMM d, yyyy");
+    const sameMonth = firstDay.getMonth() === lastDay.getMonth();
+    return sameMonth
+      ? `${format(firstDay, "MMMM d")} - ${format(lastDay, "d, yyyy")}`
+      : `${format(firstDay, "MMM d")} - ${format(lastDay, "MMM d, yyyy")}`;
+  })();
 
-  const handleThisWeek = useCallback(() => {
-    setWeekStart(currentSunday);
-  }, [currentSunday]);
+  const isToday = isCurrentWeek && dayOffset === getTodayDayIndex();
 
   const handleToggleTask = useCallback(
     (sessionId: string, taskId: string, completed: boolean) => {
@@ -78,6 +177,27 @@ export function DashboardClient() {
       updateNotes.mutate({ sessionId, notes });
     },
     [updateNotes]
+  );
+
+  const handleAddEvent = useCallback(
+    (data: { title: string; date: string; time?: string | null }) => {
+      createEvent.mutate(data);
+    },
+    [createEvent]
+  );
+
+  const handleToggleEvent = useCallback(
+    (id: string, completed: boolean) => {
+      toggleEvent.mutate({ id, completed });
+    },
+    [toggleEvent]
+  );
+
+  const handleDeleteEvent = useCallback(
+    (id: string) => {
+      deleteEvent.mutate(id);
+    },
+    [deleteEvent]
   );
 
   if (isLoading) {
@@ -121,18 +241,38 @@ export function DashboardClient() {
               </SelectContent>
             </Select>
           )}
-          {data && (
-            <WeekNavigator
-              weekStart={data.weekStart}
-              weekEnd={data.weekEnd}
-              onPrevWeek={handlePrevWeek}
-              onNextWeek={handleNextWeek}
-              onThisWeek={handleThisWeek}
-              isCurrentWeek={isCurrentWeek}
-            />
-          )}
+
+          {/* View mode toggle */}
+          <div className="flex rounded-md border overflow-hidden">
+            {VIEW_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => handleViewChange(opt.value)}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  viewMode === opt.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-muted-foreground hover:bg-muted"
+                } ${opt.value !== "week" ? "border-l" : ""}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* Navigation row */}
+      {data && (
+        <WeekNavigator
+          weekStart={data.weekStart}
+          weekEnd={data.weekEnd}
+          onPrevWeek={handlePrev}
+          onNextWeek={handleNext}
+          onThisWeek={handleToday}
+          isCurrentWeek={viewMode === "week" || viewMode === "school" ? isCurrentWeek : isToday}
+          label={viewLabel}
+        />
+      )}
 
       <UpcomingDeadlines />
 
@@ -142,10 +282,16 @@ export function DashboardClient() {
           <SessionWeekView
             sessions={filteredSessions}
             weekStart={data.weekStart}
+            startIndex={startIndex}
+            dayCount={dayCount}
+            events={events ?? []}
             onToggleTask={handleToggleTask}
             onAddTask={handleAddTask}
             onDeleteTask={handleDeleteTask}
             onUpdateNotes={handleUpdateNotes}
+            onAddEvent={handleAddEvent}
+            onToggleEvent={handleToggleEvent}
+            onDeleteEvent={handleDeleteEvent}
           />
         </>
       )}
